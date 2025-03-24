@@ -24,13 +24,6 @@ let persons = [
   }
 ]
 
-app.use(express.json())
-
-const generoiId = () => {
-  const maxId = 99999999
-  return Math.floor(Math.random() * maxId) 
-}
-
 app.get('/api/persons', (request, response) => {
   response.json(persons)
 })
@@ -51,32 +44,6 @@ app.delete('/api/persons/:id', (request, response) => {
   persons = persons.filter(person => person.id !== id)
   
   response.status(204).end()
-})
-
-app.post('/api/persons', (request, response) => {
-  const body = request.body
-
-  if (!body.name || !body.number) {
-    return response.status(400).json({ 
-      error: 'Nimi tai numero puuttuu' 
-    })
-  }
-
-  const nameExists = persons.some(person => person.name === body.name)
-  if (nameExists) {
-    return response.status(400).json({ 
-      error: 'Nimen täytyy olla uniikki' 
-    })
-  }
-
-  const person = {
-    id: generoiId().toString(),
-    name: body.name,
-    number: body.number,
-  }
-
-  persons = persons.concat(person)
-  response.json(person)
 })
 
 app.get('/info', (request, response) => {

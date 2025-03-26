@@ -1,12 +1,8 @@
-require('dotenv').config()
-
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
 const app = express()
 const path = require('path')
-const mongoose = require('mongoose')
-const Person = require('./models/person.js')
 
 let persons = [
   { 
@@ -36,32 +32,32 @@ app.use(cors())
 app.use(morgan('tiny'))
 app.use(express.static(path.join(__dirname, '/front/dist')))
 
-const url = process.env.MONGODB_URI
-mongoose.connect(url)
-
 const generoiId = () => {
   const maxId = 99999999
   return Math.floor(Math.random() * maxId) 
 }
 
 app.get('/api/persons', (request, response) => {
-  Person.find({}).then(persons => {
-    response.json(persons)
-  })
+  response.json(persons)
 })
 
 app.get('/api/persons/:id', (request, response) => {
-  Person.findById(request.params.id).then(person => {
+  const id = request.params.id
+  const person = persons.find(p => p.id === id)
+  
+  if (person) {
     response.json(person)
-  })
+  } else {
+    response.status(404).end()
+  }
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-  Person.findByIdAndDelete(request.params.id)
-    .then(() => {
-        response.status(204).end()
-      })
-    })
+  const id = request.params.id
+  persons = persons.filter(person => person.id !== id)
+  
+  response.status(204).end()
+})
 
 app.post('/api/persons', (request, response) => {
   const body = request.body
@@ -79,14 +75,14 @@ app.post('/api/persons', (request, response) => {
     })
   }
 
-  const person = new Person({
+  const person = {
+    id: generoiId().toString(),
     name: body.name,
     number: body.number,
-  })
+  }
 
-  person.save().then(person => {
-    response.json(person)
-  })
+  persons = persons.concat(person)
+  response.json(person)
 })
 
 app.get('/info', (request, response) => {
@@ -106,7 +102,7 @@ app.get('*', (request, response) => {
 })
 
 
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
